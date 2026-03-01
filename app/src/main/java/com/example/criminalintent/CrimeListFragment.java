@@ -21,6 +21,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +33,7 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private CrimeAdapter adapter;
+    private FloatingActionButton fabAddCrime;
 
     @Nullable
     @Override
@@ -66,6 +69,17 @@ public class CrimeListFragment extends Fragment {
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
+
+        fabAddCrime = view.findViewById(R.id.fab_add_crime);
+        fabAddCrime.setOnClickListener(v -> {
+            UUID id = UUID.randomUUID();
+            Crime crime = new Crime(id);
+            crime.setTitle("New Crime");
+            CrimeRepository.get().addCrime(crime);
+            if (getContext() != null) {
+                startActivity(CrimeActivity.newIntent(getContext(), id));
+            }
+        });
     }
 
     @Override
@@ -76,16 +90,7 @@ public class CrimeListFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.menu_new_crime) {
-            UUID id = UUID.randomUUID();
-            Crime crime = new Crime(id);
-            crime.setTitle("New Crime");
-            CrimeRepository.get().addCrime(crime);
-            if (getContext() != null) {
-                startActivity(CrimeActivity.newIntent(getContext(), id));
-            }
-            return true;
-        }
+        // Menu items moved to FAB, no menu handling needed
         return super.onOptionsItemSelected(item);
     }
 

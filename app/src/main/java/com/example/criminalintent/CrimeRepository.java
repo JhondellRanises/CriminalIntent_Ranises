@@ -11,12 +11,16 @@ public class CrimeRepository {
     private final List<Crime> crimes = new ArrayList<>();
 
     private CrimeRepository() { 
-        for (int i = 0; i < 20; i++) {
-            Crime crime = new Crime(UUID.randomUUID(),
-                    "Crime #" + i, new Date(), i % 3 == 0);
-            crime.setRequiresPolice(i % 5 == 0);
-            crimes.add(crime);
-        }
+        // Add one solved crime
+        Crime solvedCrime = new Crime(UUID.randomUUID(),
+                "Crime #1", new Date(), true);
+        crimes.add(solvedCrime);
+
+        // Add one unsolved crime that requires police
+        Crime unsolvedCrime = new Crime(UUID.randomUUID(),
+                "Crime #2", new Date(), false);
+        unsolvedCrime.setRequiresPolice(true);
+        crimes.add(unsolvedCrime);
     }
 
     public static CrimeRepository get() {
