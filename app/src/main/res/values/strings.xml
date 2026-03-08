@@ -5,4 +5,6 @@
     <string name="save">SAVE</string>
     <string name="contact_police">CONTACT POLICE</string>
     <string name="contact_police_toast">CONTACT POLICE</string>
+    <string name="jump_first">FIRST</string>
+    <string name="jump_last">LAST</string>
 </resources>

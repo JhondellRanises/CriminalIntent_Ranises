@@ -36,6 +36,8 @@ public class CrimeFragment extends Fragment {
     }
 
     private Crime crime;
+    private Crime originalCrime;
+    private boolean isNewCrime;
 
     private EditText titleField;
     private Button dateButton;
@@ -57,7 +59,18 @@ public class CrimeFragment extends Fragment {
         }
         if (crimeId == null) return;
 
-        crime = CrimeRepository.get().getCrime(crimeId);
+        originalCrime = CrimeRepository.get().getCrime(crimeId);
+        if (originalCrime != null) {
+            isNewCrime = false;
+            crime = new Crime(originalCrime.getId());
+            crime.setTitle(originalCrime.getTitle());
+            crime.setDate(originalCrime.getDate());
+            crime.setSolved(originalCrime.isSolved());
+            crime.setRequiresPolice(originalCrime.isRequiresPolice());
+        } else {
+            isNewCrime = true;
+            crime = new Crime(crimeId);
+        }
 
         getParentFragmentManager().setFragmentResultListener(
                 DatePickerFragment.REQUEST_KEY_DATE,
@@ -118,6 +131,14 @@ public class CrimeFragment extends Fragment {
         });
 
         saveButton.setOnClickListener(v -> {
+            if (isNewCrime) {
+                CrimeRepository.get().addCrime(crime);
+            } else if (originalCrime != null) {
+                originalCrime.setTitle(crime.getTitle());
+                originalCrime.setDate(crime.getDate());
+                originalCrime.setSolved(crime.isSolved());
+                originalCrime.setRequiresPolice(crime.isRequiresPolice());
+            }
             if (getActivity() != null) {
                 getActivity().finish();
             }

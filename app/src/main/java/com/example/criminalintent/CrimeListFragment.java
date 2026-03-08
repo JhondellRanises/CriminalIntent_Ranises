@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.format.DateFormat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,10 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 import java.util.UUID;
 
 public class CrimeListFragment extends Fragment {
@@ -65,7 +63,7 @@ public class CrimeListFragment extends Fragment {
 
         adapter = new CrimeAdapter(CrimeRepository.get().getCrimes(), crime -> {
             if (getContext() == null) return;
-            Intent intent = CrimeActivity.newIntent(getContext(), crime.getId());
+            Intent intent = CrimePagerActivity.newIntent(getContext(), crime.getId());
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
@@ -73,9 +71,6 @@ public class CrimeListFragment extends Fragment {
         fabAddCrime = view.findViewById(R.id.fab_add_crime);
         fabAddCrime.setOnClickListener(v -> {
             UUID id = UUID.randomUUID();
-            Crime crime = new Crime(id);
-            crime.setTitle("New Crime");
-            CrimeRepository.get().addCrime(crime);
             if (getContext() != null) {
                 startActivity(CrimeActivity.newIntent(getContext(), id));
             }
@@ -122,7 +117,7 @@ public class CrimeListFragment extends Fragment {
         @Override
         public int getItemViewType(int position) {
             Crime crime = crimes.get(position);
-            return crime.isRequiresPolice() ? VIEW_TYPE_POLICE : VIEW_TYPE_NORMAL;
+            return crime.isSolved() ? VIEW_TYPE_NORMAL : VIEW_TYPE_POLICE;
         }
 
         @NonNull
@@ -172,9 +167,7 @@ public class CrimeListFragment extends Fragment {
                 this.onCrimeClick = onCrimeClick;
 
                 titleTextView.setText(crime.getTitle());
-                SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd yyyy hh:mm a", Locale.getDefault());
-                formatter.setTimeZone(TimeZone.getTimeZone("Asia/Manila"));
-                dateTextView.setText(formatter.format(crime.getDate()));
+                dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
             }
 
@@ -210,10 +203,9 @@ public class CrimeListFragment extends Fragment {
                 this.onCrimeClick = onCrimeClick;
 
                 titleTextView.setText(crime.getTitle());
-                SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd yyyy hh:mm a", Locale.getDefault());
-                formatter.setTimeZone(TimeZone.getTimeZone("Asia/Manila"));
-                dateTextView.setText(formatter.format(crime.getDate()));
+                dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
+                contactPoliceButton.setVisibility(crime.isSolved() ? View.GONE : View.VISIBLE);
 
                 contactPoliceButton.setOnClickListener(v -> {
                     Toast.makeText(v.getContext(), v.getContext().getString(R.string.contact_police_toast), Toast.LENGTH_SHORT).show();
