@@ -79,7 +79,21 @@ public class CrimeFragment extends Fragment {
                     Object serializable = result.getSerializable(DatePickerFragment.BUNDLE_KEY_DATE);
                     if (serializable instanceof Date && crime != null) {
                         crime.setDate((Date) serializable);
-                        updateDate();
+                        updateDateTime();
+                        TimePickerFragment timeDialog = TimePickerFragment.newInstance(crime.getDate());
+                        timeDialog.show(getParentFragmentManager(), "TimePickerFragment");
+                    }
+                }
+        );
+
+        getParentFragmentManager().setFragmentResultListener(
+                TimePickerFragment.REQUEST_KEY_TIME,
+                this,
+                (requestKey, result) -> {
+                    Object serializable = result.getSerializable(TimePickerFragment.BUNDLE_KEY_TIME);
+                    if (serializable instanceof Date && crime != null) {
+                        crime.setDate((Date) serializable);
+                        updateDateTime();
                     }
                 }
         );
@@ -117,7 +131,7 @@ public class CrimeFragment extends Fragment {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        updateDate();
+        updateDateTime();
         dateButton.setEnabled(true);
         dateButton.setOnClickListener(v -> {
             if (crime == null) return;
@@ -157,9 +171,11 @@ public class CrimeFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateDate() {
-        if (dateButton == null || crime == null) return;
-        SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd yyyy", Locale.getDefault());
-        dateButton.setText(formatter.format(crime.getDate()));
+    private void updateDateTime() {
+        if (crime == null) return;
+        if (dateButton != null) {
+            SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("EEE MMM dd yyyy, hh:mm a", Locale.getDefault());
+            dateButton.setText(dateTimeFormatter.format(crime.getDate()));
+        }
     }
 }

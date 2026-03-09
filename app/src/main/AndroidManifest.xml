@@ -26,6 +26,9 @@
         <activity
             android:name=".CrimePagerActivity"
             android:exported="false" />
+        <activity
+            android:name=".DatePickerActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
