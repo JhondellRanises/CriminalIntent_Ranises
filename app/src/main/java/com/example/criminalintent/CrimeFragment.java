@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -42,6 +43,7 @@ public class CrimeFragment extends Fragment {
     private EditText titleField;
     private Button dateButton;
     private CheckBox solvedCheckBox;
+    private TextView statusTextView;
     private Button saveButton;
 
     @Override
@@ -70,6 +72,9 @@ public class CrimeFragment extends Fragment {
         } else {
             isNewCrime = true;
             crime = new Crime(crimeId);
+            // Set default title for new crimes
+            int crimeCount = CrimeRepository.get().getCrimes().size();
+            crime.setTitle("Crime #" + (crimeCount + 1));
         }
 
         getParentFragmentManager().setFragmentResultListener(
@@ -80,8 +85,6 @@ public class CrimeFragment extends Fragment {
                     if (serializable instanceof Date && crime != null) {
                         crime.setDate((Date) serializable);
                         updateDateTime();
-                        TimePickerFragment timeDialog = TimePickerFragment.newInstance(crime.getDate());
-                        timeDialog.show(getParentFragmentManager(), "TimePickerFragment");
                     }
                 }
         );
@@ -112,6 +115,7 @@ public class CrimeFragment extends Fragment {
         titleField = view.findViewById(R.id.crime_title);
         dateButton = view.findViewById(R.id.crime_date);
         solvedCheckBox = view.findViewById(R.id.crime_solved);
+        statusTextView = view.findViewById(R.id.crime_status);
         saveButton = view.findViewById(R.id.crime_save);
 
         return view;
@@ -135,14 +139,34 @@ public class CrimeFragment extends Fragment {
         dateButton.setEnabled(true);
         dateButton.setOnClickListener(v -> {
             if (crime == null) return;
-            DatePickerFragment dialog = DatePickerFragment.newInstance(crime.getDate());
-            dialog.show(getParentFragmentManager(), "DatePickerFragment");
+            
+            // Create a dialog to choose between date and time
+            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+            builder.setTitle("Change Date or Time");
+            builder.setItems(new CharSequence[]{"Change Date", "Change Time"}, (dialog, which) -> {
+                if (which == 0) {
+                    // Change Date
+                    DatePickerFragment dateDialog = DatePickerFragment.newInstance(crime.getDate());
+                    dateDialog.show(getParentFragmentManager(), "DatePickerFragment");
+                } else if (which == 1) {
+                    // Change Time
+                    TimePickerFragment timeDialog = TimePickerFragment.newInstance(crime.getDate());
+                    timeDialog.show(getParentFragmentManager(), "TimePickerFragment");
+                }
+            });
+            builder.show();
         });
 
         solvedCheckBox.setChecked(crime.isSolved());
         solvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (crime != null) crime.setSolved(isChecked);
+            if (crime != null) {
+                crime.setSolved(isChecked);
+                updateStatusAndButtonColor();
+            }
         });
+
+        // Initialize status and button color
+        updateStatusAndButtonColor();
 
         saveButton.setOnClickListener(v -> {
             if (isNewCrime) {
@@ -167,7 +191,26 @@ public class CrimeFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        // No menu items to handle - plus icon removed
+        if (item.getItemId() == R.id.menu_item_delete_crime) {
+            // Show confirmation dialog before deleting
+            if (getContext() != null && crime != null) {
+                new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                    .setTitle("Delete Crime")
+                    .setMessage("Are you sure you want to delete this crime?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        // Delete the crime
+                        if (!isNewCrime) {
+                            CrimeRepository.get().deleteCrime(originalCrime);
+                        }
+                        if (getActivity() != null) {
+                            getActivity().finish();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+            }
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -176,6 +219,18 @@ public class CrimeFragment extends Fragment {
         if (dateButton != null) {
             SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("EEE MMM dd yyyy, hh:mm a", Locale.getDefault());
             dateButton.setText(dateTimeFormatter.format(crime.getDate()));
+        }
+    }
+
+    private void updateStatusAndButtonColor() {
+        if (crime == null || statusTextView == null || saveButton == null) return;
+        
+        if (crime.isSolved()) {
+            statusTextView.setText("Case Closed");
+            saveButton.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark, null));
+        } else {
+            statusTextView.setText("Case Open");
+            saveButton.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_dark, null));
         }
     }
 }

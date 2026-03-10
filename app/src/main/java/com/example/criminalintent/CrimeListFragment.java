@@ -169,6 +169,13 @@ public class CrimeListFragment extends Fragment {
                 titleTextView.setText(crime.getTitle());
                 dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
+                
+                // Set text color to green for solved crimes
+                if (crime.isSolved()) {
+                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.holo_green_dark, null));
+                } else {
+                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.primary_text_light, null));
+                }
             }
 
             @Override
@@ -206,6 +213,13 @@ public class CrimeListFragment extends Fragment {
                 dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
                 contactPoliceButton.setVisibility(crime.isSolved() ? View.GONE : View.VISIBLE);
+                
+                // Set text color to green for solved crimes
+                if (crime.isSolved()) {
+                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.holo_green_dark, null));
+                } else {
+                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.primary_text_light, null));
+                }
 
                 contactPoliceButton.setOnClickListener(v -> {
                     Toast.makeText(v.getContext(), v.getContext().getString(R.string.contact_police_toast), Toast.LENGTH_SHORT).show();

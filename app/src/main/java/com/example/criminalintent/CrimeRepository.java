@@ -46,7 +46,13 @@ public class CrimeRepository {
 
     public void addCrime(Crime crime) {
         if (crime == null) return;
-        crimes.add(0, crime);
+        crimes.add(crime);
         crimesById.put(crime.getId(), crime);
+    }
+
+    public void deleteCrime(Crime crime) {
+        if (crime == null) return;
+        crimes.remove(crime);
+        crimesById.remove(crime.getId());
     }
 }
