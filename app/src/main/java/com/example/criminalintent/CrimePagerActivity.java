@@ -21,6 +21,7 @@ import java.util.UUID;
 public class CrimePagerActivity extends AppCompatActivity {
 
     public static final String EXTRA_CRIME_ID = "com.example.criminalintent.crime_id";
+    private static final String STATE_CURRENT_INDEX = "state_current_index";
 
     private ViewPager2 viewPager;
     private Button firstButton;
@@ -65,23 +66,7 @@ public class CrimePagerActivity extends AppCompatActivity {
             }
         });
 
-        UUID crimeId = null;
-        if (getIntent() != null) {
-            Object extra = getIntent().getSerializableExtra(EXTRA_CRIME_ID);
-            if (extra instanceof UUID) {
-                crimeId = (UUID) extra;
-            }
-        }
-
-        int startIndex = 0;
-        if (crimeId != null) {
-            for (int i = 0; i < crimes.size(); i++) {
-                if (crimeId.equals(crimes.get(i).getId())) {
-                    startIndex = i;
-                    break;
-                }
-            }
-        }
+        int startIndex = resolveStartIndex(savedInstanceState);
         viewPager.setCurrentItem(startIndex, false);
         updateNavigationUI(startIndex);
 
@@ -97,6 +82,12 @@ public class CrimePagerActivity extends AppCompatActivity {
             int lastIndex = Math.max(0, crimes.size() - 1);
             viewPager.setCurrentItem(lastIndex, false);
         });
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_CURRENT_INDEX, viewPager.getCurrentItem());
     }
 
     @Override
@@ -116,6 +107,31 @@ public class CrimePagerActivity extends AppCompatActivity {
         if (pageIndicator != null) {
             pageIndicator.setText(getString(R.string.case_position, position + 1, Math.max(1, crimes.size())));
         }
+    }
+
+    private int resolveStartIndex(@Nullable Bundle savedInstanceState) {
+        int lastIndex = Math.max(0, crimes.size() - 1);
+        if (savedInstanceState != null) {
+            int restored = savedInstanceState.getInt(STATE_CURRENT_INDEX, 0);
+            return Math.max(0, Math.min(restored, lastIndex));
+        }
+
+        UUID crimeId = null;
+        if (getIntent() != null) {
+            Object extra = getIntent().getSerializableExtra(EXTRA_CRIME_ID);
+            if (extra instanceof UUID) {
+                crimeId = (UUID) extra;
+            }
+        }
+
+        if (crimeId != null) {
+            for (int i = 0; i < crimes.size(); i++) {
+                if (crimeId.equals(crimes.get(i).getId())) {
+                    return i;
+                }
+            }
+        }
+        return 0;
     }
 }
 

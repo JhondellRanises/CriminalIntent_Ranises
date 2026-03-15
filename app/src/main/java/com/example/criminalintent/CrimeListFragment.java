@@ -35,6 +35,8 @@ public class CrimeListFragment extends Fragment {
     private RecyclerView recyclerView;
     private CrimeAdapter adapter;
     private FloatingActionButton fabAddCrime;
+    private View emptyView;
+    private Button emptyAddButton;
 
     @Nullable
     @Override
@@ -62,6 +64,8 @@ public class CrimeListFragment extends Fragment {
         setHasOptionsMenu(true);
 
         recyclerView = view.findViewById(R.id.crime_recycler_view);
+        emptyView = view.findViewById(R.id.empty_view);
+        emptyAddButton = view.findViewById(R.id.empty_add_button);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new CrimeAdapter(CrimeRepository.get().getCrimes(), crime -> {
@@ -72,14 +76,10 @@ public class CrimeListFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         fabAddCrime = view.findViewById(R.id.fab_add_crime);
-        fabAddCrime.setOnClickListener(v -> {
-            UUID id = UUID.randomUUID();
-            if (getContext() != null) {
-                startActivity(CrimeActivity.newIntent(getContext(), id));
-            }
-        });
+        fabAddCrime.setOnClickListener(v -> createNewCrime());
+        emptyAddButton.setOnClickListener(v -> createNewCrime());
 
-        updateToolbarSubtitle();
+        updateListUiState();
     }
 
     @Override
@@ -100,6 +100,21 @@ public class CrimeListFragment extends Fragment {
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
+        updateListUiState();
+    }
+
+    private void createNewCrime() {
+        UUID id = UUID.randomUUID();
+        if (getContext() != null) {
+            startActivity(CrimeActivity.newIntent(getContext(), id));
+        }
+    }
+
+    private void updateListUiState() {
+        List<Crime> crimes = CrimeRepository.get().getCrimes();
+        boolean hasCrimes = !crimes.isEmpty();
+        recyclerView.setVisibility(hasCrimes ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(hasCrimes ? View.GONE : View.VISIBLE);
         updateToolbarSubtitle();
     }
 
@@ -114,7 +129,8 @@ public class CrimeListFragment extends Fragment {
             if (c.isSolved()) solved++;
         }
         int open = total - solved;
-        activity.getSupportActionBar().setSubtitle(getString(R.string.list_subtitle, total, open, solved));
+        String subtitle = getResources().getQuantityString(R.plurals.subtitle_plural, total, total, open, solved);
+        activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
     private static class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

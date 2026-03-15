@@ -27,10 +27,30 @@
     <string name="report_crime_title">Report Crime</string>
     <string name="report_crime_confirm_message">Are you sure you want to report this crime?</string>
     <string name="case_position">%1$d of %2$d</string>
-    <string name="list_subtitle">%1$d cases - %2$d open - %3$d solved</string>
     <string name="case_number_title">Case #%1$d</string>
     <string name="crime_title_fallback">Untitled case</string>
     <string name="add_new_crime">Add new case</string>
+    <string name="empty_crimes_title">There are no crimes</string>
+    <string name="empty_crimes_action">Create your first case</string>
     <string name="case_status_label">Status</string>
     <string name="last_updated_label">Last Updated</string>
+    <string name="send_report">Send Report</string>
+    <string name="choose_suspect">Choose Suspect</string>
+    <string name="call_suspect">Call Suspect</string>
+    <string name="suspect_options_title">Suspect Options</string>
+    <string name="change_suspect">Change Suspect</string>
+    <string name="delete_suspect">Delete Suspect</string>
+    <string name="suspect_button_text">Suspect: %1$s</string>
+    <string name="crime_report_subject">Crime Report</string>
+    <string name="crime_report">%1$s\nDate: %2$s\nStatus: %3$s\nSuspect: %4$s</string>
+    <string name="crime_report_solved">Solved</string>
+    <string name="crime_report_unsolved">Unsolved</string>
+    <string name="crime_report_no_suspect">No suspect</string>
+    <string name="crime_report_chooser">Share crime report via</string>
+    <string name="no_contacts_app">No contacts app available</string>
+
+    <plurals name="subtitle_plural">
+        <item quantity="one">%1$d crime - %2$d open - %3$d solved</item>
+        <item quantity="other">%1$d crimes - %2$d open - %3$d solved</item>
+    </plurals>
 </resources>
