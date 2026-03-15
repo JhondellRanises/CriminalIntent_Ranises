@@ -2,6 +2,7 @@ package com.example.criminalintent;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,11 +19,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.color.MaterialColors;
 
 import java.util.List;
 import java.util.UUID;
@@ -75,6 +78,8 @@ public class CrimeListFragment extends Fragment {
                 startActivity(CrimeActivity.newIntent(getContext(), id));
             }
         });
+
+        updateToolbarSubtitle();
     }
 
     @Override
@@ -95,6 +100,21 @@ public class CrimeListFragment extends Fragment {
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
+        updateToolbarSubtitle();
+    }
+
+    private void updateToolbarSubtitle() {
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity == null || activity.getSupportActionBar() == null) return;
+
+        List<Crime> crimes = CrimeRepository.get().getCrimes();
+        int total = crimes.size();
+        int solved = 0;
+        for (Crime c : crimes) {
+            if (c.isSolved()) solved++;
+        }
+        int open = total - solved;
+        activity.getSupportActionBar().setSubtitle(getString(R.string.list_subtitle, total, open, solved));
     }
 
     private static class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -167,14 +187,17 @@ public class CrimeListFragment extends Fragment {
                 this.onCrimeClick = onCrimeClick;
 
                 titleTextView.setText(crime.getTitle());
+                if (TextUtils.isEmpty(crime.getTitle())) {
+                    titleTextView.setText(R.string.crime_title_fallback);
+                }
                 dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
-                
-                // Set text color to green for solved crimes
+
                 if (crime.isSolved()) {
-                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.holo_green_dark, null));
+                    titleTextView.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.status_closed));
                 } else {
-                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.primary_text_light, null));
+                    int onSurfaceColor = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnSurface);
+                    titleTextView.setTextColor(onSurfaceColor);
                 }
             }
 
@@ -210,19 +233,29 @@ public class CrimeListFragment extends Fragment {
                 this.onCrimeClick = onCrimeClick;
 
                 titleTextView.setText(crime.getTitle());
+                if (TextUtils.isEmpty(crime.getTitle())) {
+                    titleTextView.setText(R.string.crime_title_fallback);
+                }
                 dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
                 contactPoliceButton.setVisibility(crime.isSolved() ? View.GONE : View.VISIBLE);
-                
-                // Set text color to green for solved crimes
+
                 if (crime.isSolved()) {
-                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.holo_green_dark, null));
+                    titleTextView.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.status_closed));
                 } else {
-                    titleTextView.setTextColor(itemView.getResources().getColor(android.R.color.primary_text_light, null));
+                    int onSurfaceColor = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnSurface);
+                    titleTextView.setTextColor(onSurfaceColor);
                 }
 
                 contactPoliceButton.setOnClickListener(v -> {
-                    Toast.makeText(v.getContext(), v.getContext().getString(R.string.contact_police_toast), Toast.LENGTH_SHORT).show();
+                    new androidx.appcompat.app.AlertDialog.Builder(v.getContext())
+                            .setTitle(R.string.report_crime_title)
+                            .setMessage(R.string.report_crime_confirm_message)
+                            .setNegativeButton(R.string.cancel, null)
+                            .setPositiveButton(R.string.report, (dialog, which) ->
+                                    Toast.makeText(v.getContext(), v.getContext().getString(R.string.contact_police_toast), Toast.LENGTH_SHORT).show()
+                            )
+                            .show();
                 });
             }
 

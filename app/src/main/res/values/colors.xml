@@ -2,11 +2,36 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <!-- Sky blue theme colors -->
-    <color name="sky_blue_primary">#2196F3</color>
-    <color name="sky_blue_primary_variant">#1976D2</color>
-    <color name="sky_blue_secondary">#03DAC6</color>
-    <color name="sky_blue_secondary_variant">#018786</color>
-    <color name="sky_blue_on_primary">#FFFFFF</color>
-    <color name="sky_blue_on_secondary">#000000</color>
+
+    <!-- Brand -->
+    <color name="brand_primary">#0A4DA2</color>
+    <color name="brand_on_primary">#FFFFFF</color>
+    <color name="brand_primary_container">#D7E3FF</color>
+    <color name="brand_on_primary_container">#001946</color>
+
+    <!-- Accent -->
+    <color name="brand_secondary">#006B5C</color>
+    <color name="brand_on_secondary">#FFFFFF</color>
+    <color name="brand_secondary_container">#9CF2DF</color>
+    <color name="brand_on_secondary_container">#00201A</color>
+
+    <!-- Surface -->
+    <color name="app_background">#F4F7FB</color>
+    <color name="app_surface">#FFFFFF</color>
+    <color name="app_surface_variant">#E2E8F0</color>
+    <color name="app_outline">#738099</color>
+
+    <!-- Semantic -->
+    <color name="status_open">#9C2F2F</color>
+    <color name="status_open_container">#FFDAD8</color>
+    <color name="status_closed">#176E37</color>
+    <color name="status_closed_container">#C8F7D4</color>
+
+    <!-- Legacy aliases kept for compatibility -->
+    <color name="sky_blue_primary">@color/brand_primary</color>
+    <color name="sky_blue_primary_variant">@color/brand_primary_container</color>
+    <color name="sky_blue_secondary">@color/brand_secondary</color>
+    <color name="sky_blue_secondary_variant">@color/brand_secondary_container</color>
+    <color name="sky_blue_on_primary">@color/brand_on_primary</color>
+    <color name="sky_blue_on_secondary">@color/brand_on_secondary</color>
 </resources>

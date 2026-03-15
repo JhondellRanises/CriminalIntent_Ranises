@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +25,7 @@ public class CrimePagerActivity extends AppCompatActivity {
     private ViewPager2 viewPager;
     private Button firstButton;
     private Button lastButton;
+    private TextView pageIndicator;
     private List<Crime> crimes;
 
     public static Intent newIntent(Context context, UUID crimeId) {
@@ -40,7 +42,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(R.string.app_name);
+            getSupportActionBar().setTitle(R.string.crime_datails);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -48,6 +50,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.crime_view_pager);
         firstButton = findViewById(R.id.button_first);
         lastButton = findViewById(R.id.button_last);
+        pageIndicator = findViewById(R.id.page_indicator);
 
         viewPager.setAdapter(new FragmentStateAdapter(this) {
             @NonNull
@@ -80,12 +83,12 @@ public class CrimePagerActivity extends AppCompatActivity {
             }
         }
         viewPager.setCurrentItem(startIndex, false);
-        updateJumpButtons(startIndex);
+        updateNavigationUI(startIndex);
 
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
-                updateJumpButtons(position);
+                updateNavigationUI(position);
             }
         });
 
@@ -105,10 +108,14 @@ public class CrimePagerActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateJumpButtons(int position) {
+    private void updateNavigationUI(int position) {
         int lastIndex = Math.max(0, crimes.size() - 1);
         firstButton.setEnabled(position > 0);
         lastButton.setEnabled(position < lastIndex);
+
+        if (pageIndicator != null) {
+            pageIndicator.setText(getString(R.string.case_position, position + 1, Math.max(1, crimes.size())));
+        }
     }
 }
 

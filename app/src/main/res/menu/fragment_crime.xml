@@ -4,8 +4,9 @@
     
     <item
         android:id="@+id/menu_item_delete_crime"
-        android:icon="@android:drawable/ic_menu_delete"
+        android:icon="@drawable/ic_delete_case"
         android:title="@string/delete_crime"
-        app:showAsAction="ifRoom" />
+        app:iconTint="@color/brand_on_primary"
+        app:showAsAction="always" />
         
 </menu>

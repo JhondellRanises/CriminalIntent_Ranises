@@ -3,6 +3,7 @@ package com.example.criminalintent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.text.SimpleDateFormat;
@@ -72,9 +74,8 @@ public class CrimeFragment extends Fragment {
         } else {
             isNewCrime = true;
             crime = new Crime(crimeId);
-            // Set default title for new crimes
             int crimeCount = CrimeRepository.get().getCrimes().size();
-            crime.setTitle("Crime #" + (crimeCount + 1));
+            crime.setTitle(getString(R.string.case_number_title, crimeCount + 1));
         }
 
         getParentFragmentManager().setFragmentResultListener(
@@ -139,17 +140,13 @@ public class CrimeFragment extends Fragment {
         dateButton.setEnabled(true);
         dateButton.setOnClickListener(v -> {
             if (crime == null) return;
-            
-            // Create a dialog to choose between date and time
             androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
-            builder.setTitle("Change Date or Time");
-            builder.setItems(new CharSequence[]{"Change Date", "Change Time"}, (dialog, which) -> {
+            builder.setTitle(R.string.change_date_or_time);
+            builder.setItems(new CharSequence[]{getString(R.string.change_date), getString(R.string.change_time)}, (dialog, which) -> {
                 if (which == 0) {
-                    // Change Date
                     DatePickerFragment dateDialog = DatePickerFragment.newInstance(crime.getDate());
                     dateDialog.show(getParentFragmentManager(), "DatePickerFragment");
                 } else if (which == 1) {
-                    // Change Time
                     TimePickerFragment timeDialog = TimePickerFragment.newInstance(crime.getDate());
                     timeDialog.show(getParentFragmentManager(), "TimePickerFragment");
                 }
@@ -165,21 +162,27 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        // Initialize status and button color
         updateStatusAndButtonColor();
 
         saveButton.setOnClickListener(v -> {
-            if (isNewCrime) {
-                CrimeRepository.get().addCrime(crime);
-            } else if (originalCrime != null) {
-                originalCrime.setTitle(crime.getTitle());
-                originalCrime.setDate(crime.getDate());
-                originalCrime.setSolved(crime.isSolved());
-                originalCrime.setRequiresPolice(crime.isRequiresPolice());
-            }
-            if (getActivity() != null) {
-                getActivity().finish();
-            }
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.save_case_title)
+                    .setMessage(R.string.save_case_confirm_message)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.save, (dialog, which) -> {
+                        if (isNewCrime) {
+                            CrimeRepository.get().addCrime(crime);
+                        } else if (originalCrime != null) {
+                            originalCrime.setTitle(crime.getTitle());
+                            originalCrime.setDate(crime.getDate());
+                            originalCrime.setSolved(crime.isSolved());
+                            originalCrime.setRequiresPolice(crime.isRequiresPolice());
+                        }
+                        if (getActivity() != null) {
+                            getActivity().finish();
+                        }
+                    })
+                    .show();
         });
     }
 
@@ -192,13 +195,11 @@ public class CrimeFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.menu_item_delete_crime) {
-            // Show confirmation dialog before deleting
             if (getContext() != null && crime != null) {
                 new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                    .setTitle("Delete Crime")
-                    .setMessage("Are you sure you want to delete this crime?")
-                    .setPositiveButton("Delete", (dialog, which) -> {
-                        // Delete the crime
+                    .setTitle(R.string.delete_crime)
+                    .setMessage(R.string.delete_crime_message)
+                    .setPositiveButton(R.string.delete, (dialog, which) -> {
                         if (!isNewCrime) {
                             CrimeRepository.get().deleteCrime(originalCrime);
                         }
@@ -206,7 +207,7 @@ public class CrimeFragment extends Fragment {
                             getActivity().finish();
                         }
                     })
-                    .setNegativeButton("Cancel", null)
+                    .setNegativeButton(R.string.cancel, null)
                     .show();
             }
             return true;
@@ -224,13 +225,26 @@ public class CrimeFragment extends Fragment {
 
     private void updateStatusAndButtonColor() {
         if (crime == null || statusTextView == null || saveButton == null) return;
-        
+
         if (crime.isSolved()) {
-            statusTextView.setText("Case Closed");
-            saveButton.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark, null));
+            statusTextView.setText(R.string.case_closed);
+            statusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_closed));
+            statusTextView.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.status_closed_container)
+            ));
+            saveButton.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.status_closed)
+            ));
         } else {
-            statusTextView.setText("Case Open");
-            saveButton.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_dark, null));
+            statusTextView.setText(R.string.case_open);
+            statusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_open));
+            statusTextView.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.status_open_container)
+            ));
+            saveButton.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.brand_primary)
+            ));
         }
+        saveButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
     }
 }

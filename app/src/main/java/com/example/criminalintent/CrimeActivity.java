@@ -28,10 +28,6 @@ public class CrimeActivity extends AppCompatActivity {
         // Set up toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(R.string.app_name);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
 
         UUID crimeId = null;
         if (getIntent() != null) {
@@ -41,6 +37,12 @@ public class CrimeActivity extends AppCompatActivity {
             }
         }
         if (crimeId == null) return;
+
+        if (getSupportActionBar() != null) {
+            boolean isNewCrime = CrimeRepository.get().getCrime(crimeId) == null;
+            getSupportActionBar().setTitle(isNewCrime ? R.string.report_crime_title : R.string.crime_datails);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
