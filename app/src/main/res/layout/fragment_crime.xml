@@ -135,7 +135,8 @@
                     app:icon="@android:drawable/ic_menu_call"
                     app:iconGravity="textStart"
                     app:iconPadding="8dp" />
-            </LinearLayout>
+
+                            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

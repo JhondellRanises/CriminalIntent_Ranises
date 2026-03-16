@@ -26,6 +26,25 @@ public class CrimeRepository {
         unsolvedCrime.setRequiresPolice(true);
         crimes.add(unsolvedCrime);
         crimesById.put(unsolvedCrime.getId(), unsolvedCrime);
+
+        // Add third crime - solved, no police required
+        Crime crime3 = new Crime(UUID.randomUUID(),
+                "Crime #3", new Date(), true);
+        crimes.add(crime3);
+        crimesById.put(crime3.getId(), crime3);
+
+        // Add fourth crime - unsolved, no police required
+        Crime crime4 = new Crime(UUID.randomUUID(),
+                "Crime #4", new Date(), false);
+        crimes.add(crime4);
+        crimesById.put(crime4.getId(), crime4);
+
+        // Add fifth crime - unsolved, requires police
+        Crime crime5 = new Crime(UUID.randomUUID(),
+                "Crime #5", new Date(), false);
+        crime5.setRequiresPolice(true);
+        crimes.add(crime5);
+        crimesById.put(crime5.getId(), crime5);
     }
 
     public static CrimeRepository get() {

@@ -32,11 +32,14 @@ import java.util.UUID;
 
 public class CrimeListFragment extends Fragment {
 
+    private static final int MAX_CRIMES_LIMIT = 10;
+
     private RecyclerView recyclerView;
     private CrimeAdapter adapter;
     private FloatingActionButton fabAddCrime;
     private View emptyView;
     private Button emptyAddButton;
+    private boolean subtitleVisible = true;
 
     @Nullable
     @Override
@@ -90,7 +93,18 @@ public class CrimeListFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        // Menu items moved to FAB, no menu handling needed
+        if (item.getItemId() == R.id.show_subtitle) {
+            subtitleVisible = true;
+            updateToolbarSubtitle();
+            return true;
+        } else if (item.getItemId() == R.id.hide_subtitle) {
+            subtitleVisible = false;
+            AppCompatActivity activity = (AppCompatActivity) getActivity();
+            if (activity != null && activity.getSupportActionBar() != null) {
+                activity.getSupportActionBar().setSubtitle(null);
+            }
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -104,6 +118,15 @@ public class CrimeListFragment extends Fragment {
     }
 
     private void createNewCrime() {
+        List<Crime> crimes = CrimeRepository.get().getCrimes();
+        if (crimes.size() >= MAX_CRIMES_LIMIT) {
+            // Show message that limit has been reached
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Maximum limit of " + MAX_CRIMES_LIMIT + " crimes reached", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+        
         UUID id = UUID.randomUUID();
         if (getContext() != null) {
             startActivity(CrimeActivity.newIntent(getContext(), id));
@@ -113,14 +136,21 @@ public class CrimeListFragment extends Fragment {
     private void updateListUiState() {
         List<Crime> crimes = CrimeRepository.get().getCrimes();
         boolean hasCrimes = !crimes.isEmpty();
+        boolean canAddMore = crimes.size() < MAX_CRIMES_LIMIT;
+        
         recyclerView.setVisibility(hasCrimes ? View.VISIBLE : View.GONE);
         emptyView.setVisibility(hasCrimes ? View.GONE : View.VISIBLE);
+        
+        // Hide/show add buttons based on limit
+        fabAddCrime.setVisibility(canAddMore ? View.VISIBLE : View.GONE);
+        emptyAddButton.setVisibility(canAddMore ? View.VISIBLE : View.GONE);
+        
         updateToolbarSubtitle();
     }
 
     private void updateToolbarSubtitle() {
         AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null || activity.getSupportActionBar() == null) return;
+        if (activity == null || activity.getSupportActionBar() == null || !subtitleVisible) return;
 
         List<Crime> crimes = CrimeRepository.get().getCrimes();
         int total = crimes.size();

@@ -28,14 +28,19 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CrimeFragment extends Fragment {
 
@@ -46,6 +51,9 @@ public class CrimeFragment extends Fragment {
     private static final String STATE_REQUIRES_POLICE = "state_requires_police";
     private static final String STATE_SUSPECT = "state_suspect";
     private static final String STATE_SUSPECT_PHONE = "state_suspect_phone";
+
+    // Static list to persist manually added contacts across dialog sessions
+    private static final java.util.List<Contact> manuallyAddedContacts = new java.util.ArrayList<>();
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -246,6 +254,7 @@ public class CrimeFragment extends Fragment {
             startActivity(dialIntent);
         });
 
+
         updateStatusAndButtonColor();
         updateSuspectUi();
         configureImplicitIntentButtons();
@@ -361,7 +370,7 @@ public class CrimeFragment extends Fragment {
         if (!hasContactPermission()) {
             requestContactPermissionLauncher.launch(Manifest.permission.READ_CONTACTS);
         } else {
-            launchContactPicker();
+            showContactSelectionDialog();
         }
     }
 
@@ -430,6 +439,7 @@ public class CrimeFragment extends Fragment {
 
         boolean hasPhone = !TextUtils.isEmpty(crime.getSuspectPhoneNumber());
         callSuspectButton.setEnabled(hasPhone);
+
     }
 
     private String getCrimeReport() {
@@ -484,5 +494,209 @@ public class CrimeFragment extends Fragment {
             ));
         }
         saveButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+    }
+
+    private void showContactSelectionDialog() {
+        if (getContext() == null) return;
+
+        // Load contacts from device
+        java.util.List<Contact> contacts = loadContactsFromDevice();
+
+        // Add the current crime's suspect to the list if available and not already in manually added contacts
+        if (crime != null && crime.getSuspect() != null && !crime.getSuspect().trim().isEmpty()) {
+            String suspectName = crime.getSuspect().trim();
+            String suspectPhone = crime.getSuspectPhoneNumber() != null ? crime.getSuspectPhoneNumber().trim() : "";
+            
+            // Check if suspect is already in the contacts list (including manually added)
+            boolean found = false;
+            for (int i = 0; i < contacts.size(); i++) {
+                if (contacts.get(i).getName().equals(suspectName)) {
+                    // Update the phone number if it's different
+                    if (!contacts.get(i).getPhoneNumber().equals(suspectPhone)) {
+                        contacts.set(i, new Contact(suspectName, suspectPhone.isEmpty() ? "No phone number" : suspectPhone));
+                    }
+                    found = true;
+                    break;
+                }
+            }
+            
+            // Add to list if not found
+            if (!found) {
+                contacts.add(0, new Contact(suspectName, suspectPhone.isEmpty() ? "No phone number" : suspectPhone));
+            }
+        }
+
+        // Create dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_contact_selection, null);
+        
+        RecyclerView recyclerView = dialogView.findViewById(R.id.contacts_recycler_view);
+        TextView noContactsText = dialogView.findViewById(R.id.no_contacts_text);
+        Button addNewContactButton = dialogView.findViewById(R.id.add_new_contact_button);
+
+        // Create the dialog first so we can reference it in the adapter
+        builder.setView(dialogView);
+        builder.setTitle(R.string.select_suspect);
+        builder.setNegativeButton(R.string.cancel, null);
+        AlertDialog dialog = builder.create();
+
+        if (contacts.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            noContactsText.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            noContactsText.setVisibility(View.GONE);
+            
+            ContactAdapter adapter = new ContactAdapter(contacts, contact -> {
+                if (crime != null) {
+                    crime.setSuspect(contact.getName());
+                    crime.setSuspectPhoneNumber(contact.getPhoneNumber());
+                    updateSuspectUi();
+                }
+                // Close the dialog after selection
+                dialog.dismiss();
+            });
+            
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            recyclerView.setAdapter(adapter);
+        }
+
+        addNewContactButton.setOnClickListener(v -> {
+            showAddContactDialog(dialog);
+        });
+
+        dialog.show();
+    }
+
+    private void showAddContactDialog(AlertDialog parentDialog) {
+        if (getContext() == null) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_contact, null);
+        
+        android.widget.EditText nameInput = dialogView.findViewById(R.id.contact_name_input);
+        android.widget.EditText phoneInput = dialogView.findViewById(R.id.phone_number_input);
+        Button cancelButton = dialogView.findViewById(R.id.cancel_button);
+        Button addButton = dialogView.findViewById(R.id.add_button);
+
+        AlertDialog dialog = builder.setView(dialogView).create();
+
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        
+        addButton.setOnClickListener(v -> {
+            String name = nameInput.getText().toString().trim();
+            String phone = phoneInput.getText().toString().trim();
+            
+            if (TextUtils.isEmpty(name)) {
+                nameInput.setError("Name required");
+                return;
+            }
+            
+            // Phone number is optional for adding a contact
+            if (TextUtils.isEmpty(phone)) {
+                phone = "No phone number";
+            }
+            
+            // Create the new contact
+            Contact newContact = new Contact(name, phone);
+            
+            // Add to manually added contacts list (avoid duplicates)
+            boolean found = false;
+            for (Contact existingContact : manuallyAddedContacts) {
+                if (existingContact.getName().equals(name)) {
+                    // Update existing contact
+                    existingContact.setPhoneNumber(phone);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                manuallyAddedContacts.add(newContact);
+            }
+            
+            if (crime != null) {
+                crime.setSuspect(name);
+                crime.setSuspectPhoneNumber(phone);
+                updateSuspectUi();
+            }
+            
+            dialog.dismiss();
+            parentDialog.dismiss();
+            // Refresh the contact selection dialog to show the new contact
+            showContactSelectionDialog();
+        });
+
+        dialog.show();
+    }
+
+    private java.util.List<Contact> loadContactsFromDevice() {
+        java.util.List<Contact> contacts = new java.util.ArrayList<>();
+        
+        if (getContext() == null) return contacts;
+
+        // Always add default contacts first
+        contacts.add(new Contact("Juan Dela Cruz", "+63917-123-4567"));
+        contacts.add(new Contact("Maria Santos", "+63918-234-5678"));
+        contacts.add(new Contact("Jose Reyes", "+63919-345-6789"));
+        contacts.add(new Contact("Ana Garcia", "+63920-456-7890"));
+        contacts.add(new Contact("Carlos Rodriguez", "+63921-567-8901"));
+
+        // Try to load real device contacts and add them (avoid duplicates with defaults)
+        String[] projection = {
+                ContactsContract.Contacts._ID,
+                ContactsContract.Contacts.DISPLAY_NAME
+        };
+
+        try (Cursor cursor = getContext().getContentResolver().query(
+                ContactsContract.Contacts.CONTENT_URI,
+                projection,
+                null,
+                null,
+                ContactsContract.Contacts.DISPLAY_NAME + " ASC"
+        )) {
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    long contactId = cursor.getLong(0);
+                    String name = cursor.getString(1);
+                    
+                    if (name == null) name = "";
+                    
+                    // Check if already in list (to avoid duplicates with defaults)
+                    boolean alreadyExists = false;
+                    for (Contact existingContact : contacts) {
+                        if (existingContact.getName().equals(name)) {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!alreadyExists) {
+                        String phoneNumber = findPhoneNumberForContact(contactId);
+                        if (TextUtils.isEmpty(phoneNumber)) {
+                            phoneNumber = "No phone number";
+                        }
+                        contacts.add(new Contact(name, phoneNumber));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Handle permission errors gracefully
+        }
+
+        // Add manually added contacts (avoid duplicates)
+        for (Contact manualContact : manuallyAddedContacts) {
+            boolean found = false;
+            for (Contact existingContact : contacts) {
+                if (existingContact.getName().equals(manualContact.getName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                contacts.add(manualContact);
+            }
+        }
+        
+        return contacts;
     }
 }
