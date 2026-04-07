@@ -2,6 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+<<<<<<< HEAD
+=======
+        android:id="@+id/add_crime"
+        android:icon="@drawable/ic_add_case"
+        android:title="@string/add_new_crime"
+        app:showAsAction="always"/>
+    <item
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
         android:id="@+id/show_subtitle"
         android:title="@string/show_subtitle"
         app:showAsAction="never"/>
@@ -9,4 +17,17 @@
         android:id="@+id/hide_subtitle"
         android:title="@string/hide_subtitle"
         app:showAsAction="never"/>
+<<<<<<< HEAD
+=======
+    <item
+        android:id="@+id/action_spanish"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="@string/menu_spanish"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_english"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="@string/menu_english"
+        app:showAsAction="never"/>
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
 </menu>

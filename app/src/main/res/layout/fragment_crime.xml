@@ -136,7 +136,54 @@
                     app:iconGravity="textStart"
                     app:iconPadding="8dp" />
 
+<<<<<<< HEAD
                             </LinearLayout>
+=======
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="18dp">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/crime_photo_label"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="10dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/crime_camera"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/crime_take_photo"
+                            app:icon="@android:drawable/ic_menu_camera"
+                            app:iconGravity="textStart"
+                            app:iconPadding="8dp" />
+
+                        <ImageView
+                            android:id="@+id/crime_photo"
+                            android:layout_width="0dp"
+                            android:layout_height="120dp"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/bg_photo_preview"
+                            android:contentDescription="@string/crime_photo_thumbnail"
+                            android:scaleType="centerCrop"
+                            tools:src="@drawable/ic_launcher_foreground" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -3,6 +3,7 @@ package com.example.criminalintent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,12 +23,14 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.color.MaterialColors;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class CrimeListFragment extends Fragment {
@@ -55,12 +58,19 @@ public class CrimeListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity != null) {
-            activity.setSupportActionBar(toolbar);
-            if (activity.getSupportActionBar() != null) {
-                activity.getSupportActionBar().setTitle(R.string.app_name);
+        // Check if we're in two-pane mode
+        CrimeListActivity mainActivity = (CrimeListActivity) getActivity();
+        boolean isTwoPane = mainActivity != null && mainActivity.isTwoPane();
+
+        // Only set up toolbar if not in tablet mode
+        if (!isTwoPane) {
+            Toolbar toolbar = view.findViewById(R.id.toolbar);
+            AppCompatActivity appCompatActivity = (AppCompatActivity) getActivity();
+            if (appCompatActivity != null) {
+                appCompatActivity.setSupportActionBar(toolbar);
+                if (appCompatActivity.getSupportActionBar() != null) {
+                    appCompatActivity.getSupportActionBar().setTitle(R.string.app_name);
+                }
             }
         }
 
@@ -73,27 +83,71 @@ public class CrimeListFragment extends Fragment {
 
         adapter = new CrimeAdapter(CrimeRepository.get().getCrimes(), crime -> {
             if (getContext() == null) return;
-            Intent intent = CrimePagerActivity.newIntent(getContext(), crime.getId());
-            startActivity(intent);
+            
+            if (isTwoPane) {
+                // Show detail fragment in right pane
+                CrimeFragment crimeFragment = CrimeFragment.newInstance(crime.getId());
+                if (mainActivity != null) {
+                    mainActivity.showCrimeDetail(crimeFragment);
+                }
+            } else {
+                // Start new activity for phone
+                Intent intent = CrimePagerActivity.newIntent(getContext(), crime.getId());
+                startActivity(intent);
+            }
         });
         recyclerView.setAdapter(adapter);
+        attachSwipeToDismiss();
 
         fabAddCrime = view.findViewById(R.id.fab_add_crime);
         fabAddCrime.setOnClickListener(v -> createNewCrime());
         emptyAddButton.setOnClickListener(v -> createNewCrime());
+
+        // Hide FAB in tablet mode
+        if (isTwoPane) {
+            fabAddCrime.setVisibility(View.GONE);
+        }
 
         updateListUiState();
     }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.fragment_crime_list, menu);
+        // Only create options menu if not in tablet mode
+        CrimeListActivity activity = (CrimeListActivity) getActivity();
+        boolean isTwoPane = activity != null && activity.isTwoPane();
+        
+        if (!isTwoPane) {
+            super.onCreateOptionsMenu(menu, inflater);
+            inflater.inflate(R.menu.fragment_crime_list, menu);
+            
+            // Hide the language option that matches current locale
+            // Use the same method as the language switching
+            androidx.core.os.LocaleListCompat currentLocales = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales();
+            String currentLanguage = currentLocales.get(0).getLanguage();
+            
+            if ("es".equals(currentLanguage)) {
+                // Currently in Spanish, hide Spanish option, show English option
+                menu.findItem(R.id.action_spanish).setVisible(false);
+                menu.findItem(R.id.action_english).setVisible(true);
+            } else {
+                // Currently in English or other language, hide English option, show Spanish option
+                menu.findItem(R.id.action_english).setVisible(false);
+                menu.findItem(R.id.action_spanish).setVisible(true);
+            }
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+<<<<<<< HEAD
         if (item.getItemId() == R.id.show_subtitle) {
+=======
+        if (item.getItemId() == R.id.add_crime) {
+            createNewCrime();
+            return true;
+        } else if (item.getItemId() == R.id.show_subtitle) {
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
             subtitleVisible = true;
             updateToolbarSubtitle();
             return true;
@@ -104,19 +158,27 @@ public class CrimeListFragment extends Fragment {
                 activity.getSupportActionBar().setSubtitle(null);
             }
             return true;
+<<<<<<< HEAD
+=======
+        } else if (item.getItemId() == R.id.action_spanish) {
+            switchToSpanish();
+            return true;
+        } else if (item.getItemId() == R.id.action_english) {
+            switchToEnglish();
+            return true;
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
         }
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    public void refreshList() {
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
         updateListUiState();
     }
 
+<<<<<<< HEAD
     private void createNewCrime() {
         List<Crime> crimes = CrimeRepository.get().getCrimes();
         if (crimes.size() >= MAX_CRIMES_LIMIT) {
@@ -149,6 +211,13 @@ public class CrimeListFragment extends Fragment {
     }
 
     private void updateToolbarSubtitle() {
+=======
+    public void setSubtitleVisible(boolean visible) {
+        subtitleVisible = visible;
+    }
+
+    public void updateToolbarSubtitle() {
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null || activity.getSupportActionBar() == null || !subtitleVisible) return;
 
@@ -161,6 +230,191 @@ public class CrimeListFragment extends Fragment {
         int open = total - solved;
         String subtitle = getResources().getQuantityString(R.plurals.subtitle_plural, total, total, open, solved);
         activity.getSupportActionBar().setSubtitle(subtitle);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshList();
+    }
+
+    public void createNewCrime() {
+        List<Crime> crimes = CrimeRepository.get().getCrimes();
+        if (crimes.size() >= MAX_CRIMES_LIMIT) {
+            // Show message that limit has been reached
+            if (getContext() != null) {
+                Toast.makeText(getContext(), getString(R.string.max_crimes_limit, MAX_CRIMES_LIMIT), Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+        
+        UUID id = UUID.randomUUID();
+        CrimeListActivity mainActivity = (CrimeListActivity) getActivity();
+        boolean isTwoPane = mainActivity != null && mainActivity.isTwoPane();
+        
+        if (isTwoPane) {
+            // Show new crime in detail pane
+            CrimeFragment crimeFragment = CrimeFragment.newInstance(id);
+            if (mainActivity != null) {
+                mainActivity.showCrimeDetail(crimeFragment);
+            }
+        } else {
+            // Start new activity for phone
+            if (getContext() != null) {
+                startActivity(CrimeActivity.newIntent(getContext(), id));
+            }
+        }
+    }
+
+    private void updateListUiState() {
+        List<Crime> crimes = CrimeRepository.get().getCrimes();
+        boolean hasCrimes = !crimes.isEmpty();
+        boolean canAddMore = crimes.size() < MAX_CRIMES_LIMIT;
+        
+        recyclerView.setVisibility(hasCrimes ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(hasCrimes ? View.GONE : View.VISIBLE);
+        
+        // Check if we're in tablet mode
+        CrimeListActivity activity = (CrimeListActivity) getActivity();
+        boolean isTwoPane = activity != null && activity.isTwoPane();
+        
+        // Hide/show add buttons based on limit and tablet mode
+        if (!isTwoPane) {
+            // Only show FAB in phone mode
+            fabAddCrime.setVisibility(canAddMore ? View.VISIBLE : View.GONE);
+        }
+        emptyAddButton.setVisibility(canAddMore ? View.VISIBLE : View.GONE);
+        
+        updateToolbarSubtitle();
+
+        // In tablet mode, if list is empty, show welcome fragment
+        if (isTwoPane && (!hasCrimes)) {
+            if (activity != null) {
+                activity.showCrimeDetail(new WelcomeFragment());
+            }
+        }
+    }
+
+    public void switchToSpanish() {
+        try {
+            // App-wide locale change (does not require system settings)
+            androidx.core.os.LocaleListCompat spanish = androidx.core.os.LocaleListCompat.forLanguageTags("es");
+            androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(spanish);
+            
+            // Show toast first
+            Toast.makeText(requireContext(), R.string.language_changed_to_spanish, Toast.LENGTH_SHORT).show();
+            
+            // Delay recreation to ensure locale is applied
+            if (getActivity() != null) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    if (getActivity() != null) {
+                        getActivity().recreate();
+                    }
+                }, 100);
+            }
+        } catch (Exception e) {
+            // Fallback method if the above fails
+            if (getContext() != null) {
+                java.util.Locale locale = new java.util.Locale("es");
+                java.util.Locale.setDefault(locale);
+                android.content.res.Configuration config = new android.content.res.Configuration();
+                config.setLocale(locale);
+                getContext().getResources().updateConfiguration(config, getContext().getResources().getDisplayMetrics());
+                
+                Toast.makeText(getContext(), R.string.language_changed_to_spanish, Toast.LENGTH_SHORT).show();
+                if (getActivity() != null) {
+                    getActivity().recreate();
+                }
+            }
+        }
+    }
+
+    public void switchToEnglish() {
+        try {
+            // App-wide locale change (does not require system settings)
+            androidx.core.os.LocaleListCompat english = androidx.core.os.LocaleListCompat.forLanguageTags("en");
+            androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(english);
+            
+            // Show toast first
+            Toast.makeText(requireContext(), R.string.language_changed_to_english, Toast.LENGTH_SHORT).show();
+            
+            // Delay recreation to ensure locale is applied
+            if (getActivity() != null) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    if (getActivity() != null) {
+                        getActivity().recreate();
+                    }
+                }, 100);
+            }
+        } catch (Exception e) {
+            // Fallback method if the above fails
+            if (getContext() != null) {
+                java.util.Locale locale = new java.util.Locale("en");
+                java.util.Locale.setDefault(locale);
+                android.content.res.Configuration config = new android.content.res.Configuration();
+                config.setLocale(locale);
+                getContext().getResources().updateConfiguration(config, getContext().getResources().getDisplayMetrics());
+                
+                Toast.makeText(getContext(), R.string.language_changed_to_english, Toast.LENGTH_SHORT).show();
+                if (getActivity() != null) {
+                    getActivity().recreate();
+                }
+            }
+        }
+    }
+
+    public void invalidateOptionsMenu() {
+        if (getActivity() != null) {
+            getActivity().invalidateOptionsMenu();
+        }
+    }
+
+    private void attachSwipeToDismiss() {
+        ItemTouchHelper.SimpleCallback callback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false; // we only support swipe
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getBindingAdapterPosition();
+                if (position == RecyclerView.NO_POSITION) {
+                    adapter.notifyDataSetChanged();
+                    return;
+                }
+                List<Crime> crimes = CrimeRepository.get().getCrimes();
+                if (position >= crimes.size()) {
+                    adapter.notifyDataSetChanged();
+                    return;
+                }
+                Crime crime = crimes.get(position);
+                CrimeRepository.get().deleteCrime(crime);
+                adapter.notifyItemRemoved(position);
+                
+                // Update UI state first
+                updateListUiState();
+                
+                // Handle tablet view after deletion with a small delay
+                CrimeListActivity activity = (CrimeListActivity) getActivity();
+                if (activity != null && activity.isTwoPane()) {
+                    // Post delayed to ensure UI is updated first
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        List<Crime> updatedCrimes = CrimeRepository.get().getCrimes();
+                        if (!updatedCrimes.isEmpty()) {
+                            // Select the next available crime, or the previous one if deleted was last
+                            int newPosition = Math.min(position, updatedCrimes.size() - 1);
+                            if (newPosition >= 0 && activity != null) {
+                                Crime nextCrime = updatedCrimes.get(newPosition);
+                                CrimeFragment crimeFragment = CrimeFragment.newInstance(nextCrime.getId());
+                                activity.showCrimeDetail(crimeFragment);
+                            }
+                        }
+                    }, 100); // Small delay to ensure UI updates
+                }
+            }
+        };
+        new ItemTouchHelper(callback).attachToRecyclerView(recyclerView);
     }
 
     private static class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -236,7 +490,8 @@ public class CrimeListFragment extends Fragment {
                 if (TextUtils.isEmpty(crime.getTitle())) {
                     titleTextView.setText(R.string.crime_title_fallback);
                 }
-                dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
+                java.text.DateFormat dateFormatter = DateFormat.getMediumDateFormat(itemView.getContext());
+                dateTextView.setText(dateFormatter.format(crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
 
                 if (crime.isSolved()) {
@@ -282,7 +537,8 @@ public class CrimeListFragment extends Fragment {
                 if (TextUtils.isEmpty(crime.getTitle())) {
                     titleTextView.setText(R.string.crime_title_fallback);
                 }
-                dateTextView.setText(DateFormat.format("EEEE, MMM dd, yyyy", crime.getDate()));
+                java.text.DateFormat dateFormatter = DateFormat.getMediumDateFormat(itemView.getContext());
+                dateTextView.setText(dateFormatter.format(crime.getDate()));
                 solvedIcon.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
                 contactPoliceButton.setVisibility(crime.isSolved() ? View.GONE : View.VISIBLE);
 

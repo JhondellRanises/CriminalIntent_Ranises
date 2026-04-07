@@ -13,15 +13,20 @@
         <item name="colorOutline">@color/app_outline</item>
         <item name="android:windowBackground">@color/app_background</item>
         <item name="android:windowLightStatusBar">false</item>
+<<<<<<< HEAD
+=======
+        <item name="android:statusBarColor">@android:color/transparent</item>
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
         <item name="toolbarStyle">@style/Widget.CriminalIntent.Toolbar</item>
         <item name="materialCardViewStyle">@style/Widget.CriminalIntent.CardView</item>
     </style>
 
     <style name="Widget.CriminalIntent.Toolbar" parent="Widget.Material3.Toolbar">
         <item name="titleTextColor">@color/brand_on_primary</item>
-        <item name="subtitleTextColor">@color/brand_primary_container</item>
+        <item name="subtitleTextColor">@color/brand_on_primary</item>
         <item name="navigationIconTint">@color/brand_on_primary</item>
         <item name="android:background">@color/brand_primary</item>
+        <item name="android:elevation">0dp</item>
     </style>
 
     <style name="Widget.CriminalIntent.CardView" parent="Widget.Material3.CardView.Elevated">

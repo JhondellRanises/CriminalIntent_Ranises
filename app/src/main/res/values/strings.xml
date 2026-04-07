@@ -50,6 +50,11 @@
     <string name="no_contacts_app">No contacts app available</string>
     <string name="show_subtitle">Show Subtitle</string>
     <string name="hide_subtitle">Hide Subtitle</string>
+<<<<<<< HEAD
+=======
+    <string name="menu_spanish">Switch to Spanish</string>
+    <string name="menu_english">Switch to English</string>
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
     <string name="select_suspect">Contacts</string>
     <string name="contact_dialog_title">Select a Contact</string>
     <string name="add_new_contact">Add New Contact</string>
@@ -57,6 +62,24 @@
     <string name="contact_name">Contact Name</string>
     <string name="phone_number">Phone Number</string>
     <string name="add_contact">Add Contact</string>
+<<<<<<< HEAD
+=======
+    <string name="crime_take_photo">Take Photo</string>
+    <string name="crime_choose_photo">Choose from Gallery</string>
+    <string name="crime_photo_source">Add Crime Photo</string>
+    <string name="crime_photo_label">Crime Scene Photo</string>
+    <string name="crime_photo_thumbnail">Crime scene thumbnail</string>
+    <string name="crime_photo_fullscreen">Crime scene full photo</string>
+    <string name="photo_not_available">Photo not available yet</string>
+    <string name="name_required">Name required</string>
+    <string name="no_phone_number">No phone number</string>
+    <string name="max_crimes_limit">Maximum limit of %1$d crimes reached</string>
+    <string name="language_changed_to_spanish">Language changed to Spanish</string>
+    <string name="language_changed_to_english">Language changed to English</string>
+    <string name="welcome_title">Welcome to CriminalIntent</string>
+    <string name="welcome_message">Select a crime from the list to view details, or create a new crime to get started.</string>
+    <string name="welcome_instruction">Choose a crime from the left panel to see its details here.</string>
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
 
     <plurals name="subtitle_plural">
         <item quantity="one">%1$d crime - %2$d open - %3$d solved</item>

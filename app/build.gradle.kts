@@ -43,6 +43,7 @@ dependencies {
     implementation("androidx.fragment:fragment:1.6.2")
     implementation(libs.androidx.recyclerview)
     implementation("androidx.viewpager2:viewpager2:1.1.0")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

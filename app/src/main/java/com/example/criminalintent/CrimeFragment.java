@@ -1,26 +1,31 @@
 package com.example.criminalintent;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,11 +36,15 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.text.SimpleDateFormat;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
@@ -43,6 +52,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CrimeFragment extends Fragment {
+
+    public interface Callbacks {
+        void onCrimeUpdated(Crime crime);
+        void onCrimeDeleted(Crime crime);
+    }
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String STATE_TITLE = "state_title";
@@ -55,6 +69,11 @@ public class CrimeFragment extends Fragment {
     // Static list to persist manually added contacts across dialog sessions
     private static final java.util.List<Contact> manuallyAddedContacts = new java.util.ArrayList<>();
 
+<<<<<<< HEAD
+=======
+    private Callbacks callbacks;
+
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
         args.putSerializable(ARG_CRIME_ID, crimeId);
@@ -76,6 +95,13 @@ public class CrimeFragment extends Fragment {
     private Button reportButton;
     private Button suspectButton;
     private Button callSuspectButton;
+    private Button photoButton;
+    private ImageView photoView;
+    private File photoFile;
+    private Uri photoUri;
+    private ViewTreeObserver.OnGlobalLayoutListener photoLayoutListener;
+    private ActivityResultLauncher<Uri> takePictureLauncher;
+    private ActivityResultLauncher<String> pickImageLauncher;
 
     private final ActivityResultLauncher<Intent> pickContactLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -98,9 +124,42 @@ public class CrimeFragment extends Fragment {
             });
 
     @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        callbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        callbacks = null;
+    }
+
+    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
+        takePictureLauncher = registerForActivityResult(
+                new ActivityResultContracts.TakePicture(),
+                result -> {
+                    if (!isAdded()) return;
+                    if (result) {
+                        updatePhotoView();
+                    } else {
+                        Toast.makeText(requireContext(), R.string.photo_not_available, Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (!isAdded() || uri == null) return;
+                    copyImageFromUri(uri);
+                    updatePhotoView();
+                }
+        );
 
         UUID crimeId = null;
         Bundle args = getArguments();
@@ -139,6 +198,15 @@ public class CrimeFragment extends Fragment {
             crime.setRequiresPolice(savedInstanceState.getBoolean(STATE_REQUIRES_POLICE, crime.isRequiresPolice()));
             crime.setSuspect(savedInstanceState.getString(STATE_SUSPECT, crime.getSuspect()));
             crime.setSuspectPhoneNumber(savedInstanceState.getString(STATE_SUSPECT_PHONE, crime.getSuspectPhoneNumber()));
+        }
+
+        if (crime != null && getContext() != null) {
+            photoFile = new File(requireContext().getFilesDir(), crime.getPhotoFileName());
+            photoUri = FileProvider.getUriForFile(
+                    requireContext(),
+                    "com.example.criminalintent.fileprovider",
+                    photoFile
+            );
         }
 
         getParentFragmentManager().setFragmentResultListener(
@@ -184,6 +252,8 @@ public class CrimeFragment extends Fragment {
         reportButton = view.findViewById(R.id.crime_report);
         suspectButton = view.findViewById(R.id.crime_suspect);
         callSuspectButton = view.findViewById(R.id.crime_call_suspect);
+        photoButton = view.findViewById(R.id.crime_camera);
+        photoView = view.findViewById(R.id.crime_photo);
 
         return view;
     }
@@ -254,6 +324,10 @@ public class CrimeFragment extends Fragment {
             startActivity(dialIntent);
         });
 
+<<<<<<< HEAD
+=======
+        setupPhotoSection();
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
 
         updateStatusAndButtonColor();
         updateSuspectUi();
@@ -275,7 +349,12 @@ public class CrimeFragment extends Fragment {
                             originalCrime.setSuspect(crime.getSuspect());
                             originalCrime.setSuspectPhoneNumber(crime.getSuspectPhoneNumber());
                         }
-                        if (getActivity() != null) {
+                        // Notify callback instead of finishing activity
+                        if (callbacks != null) {
+                            callbacks.onCrimeUpdated(isNewCrime ? crime : originalCrime);
+                        }
+                        // For phone layout, still finish the activity
+                        if (getActivity() != null && !(getActivity() instanceof CrimeListActivity)) {
                             getActivity().finish();
                         }
                     })
@@ -316,8 +395,13 @@ public class CrimeFragment extends Fragment {
                             }
                             if (crimeToDelete != null) {
                                 CrimeRepository.get().deleteCrime(crimeToDelete);
+                                // Notify callback
+                                if (callbacks != null) {
+                                    callbacks.onCrimeDeleted(crimeToDelete);
+                                }
                             }
-                            if (getActivity() != null) {
+                            // For phone layout, still finish the activity
+                            if (getActivity() != null && !(getActivity() instanceof CrimeListActivity)) {
                                 getActivity().finish();
                             }
                         })
@@ -329,12 +413,126 @@ public class CrimeFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (photoView != null && photoLayoutListener != null && photoView.getViewTreeObserver().isAlive()) {
+            photoView.getViewTreeObserver().removeOnGlobalLayoutListener(photoLayoutListener);
+        }
+        photoView = null;
+        photoButton = null;
+    }
+
     private void launchContactPicker() {
         Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
         try {
             pickContactLauncher.launch(pickContact);
         } catch (ActivityNotFoundException ex) {
             Toast.makeText(requireContext(), R.string.no_contacts_app, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void setupPhotoSection() {
+        if (photoButton == null || photoView == null) return;
+
+        photoButton.setEnabled(canTakePhoto() || pickImageLauncher != null);
+        photoButton.setOnClickListener(v -> {
+            if (!isAdded()) return;
+            CharSequence[] options = new CharSequence[]{
+                    getString(R.string.crime_take_photo),
+                    getString(R.string.crime_choose_photo)
+            };
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.crime_photo_source)
+                    .setItems(options, (dialog, which) -> {
+                        if (which == 0 && photoUri != null) {
+                            takePictureLauncher.launch(photoUri);
+                        } else if (which == 1 && pickImageLauncher != null) {
+                            pickImageLauncher.launch("image/*");
+                        }
+                    })
+                    .show();
+        });
+
+        photoLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (photoView == null) return;
+                int width = photoView.getWidth();
+                int height = photoView.getHeight();
+                if (width > 0 && height > 0) {
+                    updatePhotoView();
+                    photoView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+            }
+        };
+        photoView.getViewTreeObserver().addOnGlobalLayoutListener(photoLayoutListener);
+
+        photoView.setOnClickListener(v -> {
+            if (photoFile != null && photoFile.exists()) {
+                PhotoDialogFragment.newInstance(photoFile)
+                        .show(getParentFragmentManager(), "DialogPhoto");
+            } else if (isAdded()) {
+                Toast.makeText(requireContext(), R.string.photo_not_available, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private boolean canTakePhoto() {
+        if (getActivity() == null || photoUri == null) return false;
+        Intent captureImage = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        PackageManager packageManager = requireActivity().getPackageManager();
+        return captureImage.resolveActivity(packageManager) != null;
+    }
+
+    private void updatePhotoView() {
+        if (!isAdded() || photoView == null) return;
+
+        if (photoFile == null || !photoFile.exists()) {
+            photoView.setImageResource(android.R.color.transparent);
+            photoView.setContentDescription(getString(R.string.photo_not_available));
+            return;
+        }
+
+        int width = photoView.getWidth();
+        int height = photoView.getHeight();
+        if (width == 0 || height == 0) {
+            // If dimensions are not available, use a reasonable default
+            width = 300;
+            height = 120;
+        }
+
+        try {
+            Bitmap bitmap = PictureUtils.getScaledBitmap(photoFile.getPath(), width, height);
+            if (bitmap != null) {
+                photoView.setImageBitmap(bitmap);
+                photoView.setContentDescription(getString(R.string.crime_photo_thumbnail));
+                photoView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            } else {
+                photoView.setImageResource(android.R.color.transparent);
+                photoView.setContentDescription(getString(R.string.photo_not_available));
+            }
+        } catch (Exception e) {
+            // Handle any errors in loading the bitmap
+            photoView.setImageResource(android.R.color.transparent);
+            photoView.setContentDescription(getString(R.string.photo_not_available));
+        }
+    }
+
+    private void copyImageFromUri(@NonNull Uri sourceUri) {
+        if (photoFile == null || getContext() == null) return;
+        try (InputStream inputStream = requireContext().getContentResolver().openInputStream(sourceUri);
+             FileOutputStream outputStream = new FileOutputStream(photoFile)) {
+            if (inputStream == null) return;
+            byte[] buffer = new byte[8 * 1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            if (isAdded()) {
+                Toast.makeText(requireContext(), R.string.photo_not_available, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -453,8 +651,7 @@ public class CrimeFragment extends Fragment {
                 ? getString(R.string.crime_report_no_suspect)
                 : crime.getSuspect();
 
-        String date = new SimpleDateFormat("EEE, MMM dd yyyy, hh:mm a", Locale.getDefault())
-                .format(crime.getDate());
+        String date = formatDateTimeForLocale(crime.getDate());
 
         String title = TextUtils.isEmpty(crime.getTitle())
                 ? getString(R.string.crime_title_fallback)
@@ -466,9 +663,15 @@ public class CrimeFragment extends Fragment {
     private void updateDateTime() {
         if (crime == null) return;
         if (dateButton != null) {
-            SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("EEE MMM dd yyyy, hh:mm a", Locale.getDefault());
-            dateButton.setText(dateTimeFormatter.format(crime.getDate()));
+            dateButton.setText(formatDateTimeForLocale(crime.getDate()));
         }
+    }
+
+    private String formatDateTimeForLocale(Date date) {
+        if (getContext() == null || date == null) return "";
+        java.text.DateFormat dateFormatter = DateFormat.getMediumDateFormat(getContext());
+        java.text.DateFormat timeFormatter = DateFormat.getTimeFormat(getContext());
+        return dateFormatter.format(date) + ", " + timeFormatter.format(date);
     }
 
     private void updateStatusAndButtonColor() {
@@ -513,7 +716,11 @@ public class CrimeFragment extends Fragment {
                 if (contacts.get(i).getName().equals(suspectName)) {
                     // Update the phone number if it's different
                     if (!contacts.get(i).getPhoneNumber().equals(suspectPhone)) {
+<<<<<<< HEAD
                         contacts.set(i, new Contact(suspectName, suspectPhone.isEmpty() ? "No phone number" : suspectPhone));
+=======
+                        contacts.set(i, new Contact(suspectName, suspectPhone.isEmpty() ? getString(R.string.no_phone_number) : suspectPhone));
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
                     }
                     found = true;
                     break;
@@ -522,7 +729,11 @@ public class CrimeFragment extends Fragment {
             
             // Add to list if not found
             if (!found) {
+<<<<<<< HEAD
                 contacts.add(0, new Contact(suspectName, suspectPhone.isEmpty() ? "No phone number" : suspectPhone));
+=======
+                contacts.add(0, new Contact(suspectName, suspectPhone.isEmpty() ? getString(R.string.no_phone_number) : suspectPhone));
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
             }
         }
 
@@ -588,13 +799,21 @@ public class CrimeFragment extends Fragment {
             String phone = phoneInput.getText().toString().trim();
             
             if (TextUtils.isEmpty(name)) {
+<<<<<<< HEAD
                 nameInput.setError("Name required");
+=======
+                nameInput.setError(getString(R.string.name_required));
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
                 return;
             }
             
             // Phone number is optional for adding a contact
             if (TextUtils.isEmpty(phone)) {
+<<<<<<< HEAD
                 phone = "No phone number";
+=======
+                phone = getString(R.string.no_phone_number);
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
             }
             
             // Create the new contact
@@ -673,7 +892,11 @@ public class CrimeFragment extends Fragment {
                     if (!alreadyExists) {
                         String phoneNumber = findPhoneNumberForContact(contactId);
                         if (TextUtils.isEmpty(phoneNumber)) {
+<<<<<<< HEAD
                             phoneNumber = "No phone number";
+=======
+                            phoneNumber = getString(R.string.no_phone_number);
+>>>>>>> c126cc4 (Finish the Chapter 16, 17 and 18)
                         }
                         contacts.add(new Contact(name, phoneNumber));
                     }

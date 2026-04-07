@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_background"
+    tools:context=".CrimeListFragment">
+
+    <!-- Empty state view -->
+    <LinearLayout
+        android:id="@+id/empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/empty_crimes_title"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+            android:textColor="?attr/colorOnSurface"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/empty_crimes_action"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/empty_add_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_new_crime"
+            app:icon="@drawable/ic_add_case"
+            app:iconGravity="textStart" />
+
+    </LinearLayout>
+
+    <!-- Crime list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/crime_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingHorizontal="8dp"
+        android:clipToPadding="false"
+        tools:listitem="@layout/list_item_crime" />
+
+    <!-- Floating Action Button (hidden in tablet mode) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_crime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_add_case"
+        android:contentDescription="@string/add_new_crime"
+        android:visibility="gone" />
+
+</FrameLayout>
